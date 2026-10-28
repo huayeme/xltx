@@ -95,9 +95,10 @@ export function createBrowser({cwd = process.cwd()} = {}) {
   // Chromium keeps data/browser-profile locked (ProcessSingleton), which makes
   // the next launch fail. The only way to release it is to kill the process
   // that owns the profile.
-  // Chromium is spawned through a wrapper here, so the whole command can sit in
-  // argv[0]; match the flag on argument boundaries instead of exact argv entries,
-  // otherwise data/browser-profile also matches data/browser-profile-task.
+  //
+  // Chromium rewrites its command line into one process-title string, so the
+  // whole command can arrive as a single argv[0]. Match the flag on argument
+  // boundaries; a plain substring test would also match data/browser-profile-task.
   function ownsProfile(cmdline, flag) {
     for (let index = cmdline.indexOf(flag); index >= 0; index = cmdline.indexOf(flag, index + 1)) {
       const before = index === 0 ? '' : cmdline[index - 1];
@@ -126,21 +127,33 @@ export function createBrowser({cwd = process.cwd()} = {}) {
     return ids;
   }
 
+  async function processGone(pid) {
+    try {
+      await fs.stat(`/proc/${pid}`);
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
   async function killProfileProcesses() {
-    let ids = await profileProcessIds();
+    const ids = await profileProcessIds();
     for (const pid of ids) {
       try {
         process.kill(pid, 'SIGKILL');
       } catch {}
     }
-    // A killed process stays in /proc until its parent reaps it, and Chromium's
-    // singleton check still sees that entry. Wait for it to clear.
+    // A killed process stays in /proc as a zombie until someone reaps it, and
+    // Chromium's singleton check still sees that entry. A zombie has an empty
+    // cmdline, so rescanning would miss it: wait on the pids we killed instead.
     const deadline = Date.now() + config.exitTimeoutMs;
-    while (ids.length && Date.now() < deadline) {
+    const remaining = new Set();
+    for (const pid of ids) if (!(await processGone(pid))) remaining.add(pid);
+    while (remaining.size && Date.now() < deadline) {
       await new Promise(resolve => setTimeout(resolve, 50));
-      ids = await profileProcessIds();
+      for (const pid of [...remaining]) if (await processGone(pid)) remaining.delete(pid);
     }
-    return ids.length === 0;
+    return remaining.size === 0;
   }
 
   async function close() {
