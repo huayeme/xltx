@@ -29,7 +29,7 @@ function seedPersona(project,dataDir) {
 // The launcher redirects XDG_RUNTIME_DIR into data/run for the agent runtime,
 // but systemctl must reach the real user manager at /run/user/<uid>. Without
 // that, `systemctl --user` fails with "Failed to connect to user scope bus".
-function hostEnvironment(){
+export function hostEnvironment(){
   const {LD_LIBRARY_PATH:_,...env}=process.env;
   const uid=process.getuid?.(),runtime=uid===undefined?undefined:`/run/user/${uid}`;
   if(runtime&&fs.existsSync(runtime))env.XDG_RUNTIME_DIR=runtime;

@@ -20,9 +20,9 @@ cd xltx-0.1.0-linux-x64
 
 日常命令：`start`、`stop`、`restart`、`status`、`logs`、`logout`。`logs` 显示本地日志并持续刷新，Ctrl+C 退出。
 
-微信使用九个命令：`/new /fork /stop /session /model /thinking /compact /verbose /reload`。`/reload` 强制重启整个后台服务，正在跑的对话会被打断；收到就立即重启，不等回复投递。
+微信使用九个命令：`/new /fork /stop /session /model /thinking /compact /verbose /reload`。`/reload` 强制重启整个后台服务，正在跑的对话会被打断；收到就立即重启，不回复消息。
 
-助手可以浏览网页、点击填写、截图、上传下载、读取 HTML 和执行页面脚本；浏览器随包提供，不需要另行安装，也不会打开可见窗口。网站登录状态保存在安装目录内。
+助手可以浏览网页、点击填写、截图、上传下载、读取 HTML 和执行页面脚本；浏览器随包提供，不需要另行安装，也不会打开可见窗口。网站登录状态保存在安装目录内。每一步最多等 30 秒（下载 60 秒），超时会明确报错，并杀掉挂住的浏览器进程，下次自动重新启动。
 
 ## 定时任务
 

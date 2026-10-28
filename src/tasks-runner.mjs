@@ -57,7 +57,15 @@ export function createTaskRunner({config, root, log = console.error}) {
     try {
       signal?.throwIfAborted();
       const message = task.instruction + (payload == null ? '' : `\n${typeof payload === 'string' ? payload : JSON.stringify(payload)}`);
-      const result = await connection.request('prompt', {message});
+      // A submission that times out is not the same failure as a run that never
+      // ends, so say which one happened instead of reusing the generic copy.
+      let result;
+      try {
+        result = await connection.request('prompt', {message});
+      } catch (error) {
+        if (timedOut) throw error;
+        throw new Error('The scheduled task did not start: ' + error.message);
+      }
       if (result?.disposition === 'handled') throw new Error('The scheduled task did not start');
       await settled;
       if (signal?.aborted) throw signal.reason || new Error('The user stopped this run');

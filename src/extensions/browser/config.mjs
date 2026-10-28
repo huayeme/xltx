@@ -14,5 +14,7 @@ export const browserConfig = Object.freeze({
   defaultTimeoutMs: 30000,
   navigationTimeoutMs: 30000,
   downloadTimeoutMs: 60000,
+  closeTimeoutMs: 5000,
+  exitTimeoutMs: 2000,
   scrollPixels: 600,
 });

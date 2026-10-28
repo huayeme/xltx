@@ -91,12 +91,79 @@ export function createBrowser({cwd = process.cwd()} = {}) {
   const titleOf = target => guard(() => target.title(), config.defaultTimeoutMs, 'Reading the tab title', {reset: false}).catch(() => '');
   const tabList = () => Promise.all([...tabs].map(async ([id, target]) => ({id, url: target.url(), title: await titleOf(target), active: target === page})));
 
+  // Playwright returns no Browser handle for a persistent context, and a wedged
+  // Chromium keeps data/browser-profile locked (ProcessSingleton), which makes
+  // the next launch fail. The only way to release it is to kill the process
+  // that owns the profile.
+  // Chromium is spawned through a wrapper here, so the whole command can sit in
+  // argv[0]; match the flag on argument boundaries instead of exact argv entries,
+  // otherwise data/browser-profile also matches data/browser-profile-task.
+  function ownsProfile(cmdline, flag) {
+    for (let index = cmdline.indexOf(flag); index >= 0; index = cmdline.indexOf(flag, index + 1)) {
+      const before = index === 0 ? '' : cmdline[index - 1];
+      const after = cmdline[index + flag.length];
+      if ((before === '' || before === '\0' || before === ' ') && (after === undefined || after === '\0' || after === ' ')) return true;
+    }
+    return false;
+  }
+
+  async function profileProcessIds() {
+    const profile = browserProfileDirectory();
+    const flag = `--user-data-dir=${profile}`;
+    let entries;
+    try {
+      entries = await fs.readdir('/proc');
+    } catch {
+      return [];
+    }
+    const ids = [];
+    for (const entry of entries) {
+      if (!/^\d+$/.test(entry)) continue;
+      try {
+        if (ownsProfile(await fs.readFile(`/proc/${entry}/cmdline`, 'utf8'), flag)) ids.push(Number(entry));
+      } catch {}
+    }
+    return ids;
+  }
+
+  async function killProfileProcesses() {
+    let ids = await profileProcessIds();
+    for (const pid of ids) {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {}
+    }
+    // A killed process stays in /proc until its parent reaps it, and Chromium's
+    // singleton check still sees that entry. Wait for it to clear.
+    const deadline = Date.now() + config.exitTimeoutMs;
+    while (ids.length && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      ids = await profileProcessIds();
+    }
+    return ids.length === 0;
+  }
+
   async function close() {
     const current = context;
     context = undefined;
     page = undefined;
     tabs.clear();
-    await current?.close().catch(() => {});
+    if (!current) return;
+    // A wedged browser can hang close() itself, so give the shutdown a deadline
+    // and kill whatever still holds the profile.
+    let timer;
+    try {
+      const closing = current.close().catch(() => {});
+      const timedOut = await Promise.race([
+        closing.then(() => false),
+        new Promise(resolve => {
+          timer = setTimeout(() => resolve(true), config.closeTimeoutMs);
+        }),
+      ]);
+      if (timedOut) await killProfileProcesses();
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   // Playwright cannot interrupt evaluate, content or title: they keep waiting
@@ -119,18 +186,35 @@ export function createBrowser({cwd = process.cwd()} = {}) {
     }
   }
 
+  async function launch() {
+    const {chromium} = await import('playwright');
+    return chromium.launchPersistentContext(browserProfileDirectory(), {
+      executablePath: browserExecutable(),
+      env: browserEnvironment(),
+      acceptDownloads: true,
+      timeout: config.defaultTimeoutMs,
+    });
+  }
+
   async function getPage() {
     if (page && !page.isClosed()) return page;
     if (context) {
       page = await guard(() => context.newPage(), config.defaultTimeoutMs, 'Opening a tab');
       return page;
     }
-    const {chromium} = await import('playwright');
-    context = await chromium.launchPersistentContext(browserProfileDirectory(), {
-      executablePath: browserExecutable(),
-      env: browserEnvironment(),
-      acceptDownloads: true,
-    });
+    let fresh;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        fresh = await launch();
+        break;
+      } catch (error) {
+        // A shutdown that could not stop the old browser leaves the profile
+        // locked. Clear it once and try again before reporting a hard failure.
+        if (attempt) throw new Error(`The browser could not be restarted; restart the service (${error.message})`);
+        await killProfileProcesses();
+      }
+    }
+    context = fresh;
     context.on('page', register);
     for (const existing of context.pages()) register(existing);
     page = context.pages().at(-1) ?? await guard(() => context.newPage(), config.defaultTimeoutMs, 'Opening a tab');

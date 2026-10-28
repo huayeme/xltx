@@ -1,14 +1,25 @@
+import {execFile} from 'node:child_process';
 import {msg} from './messages.mjs';
+import {hostEnvironment} from './deploy.mjs';
 
-// Restarting the service is the point of the command: ask systemd right away
-// and let it stop this process. The reply is already in the answer that the
-// bridge publishes next; if the restart wins the race, the user sees the
-// session come back instead of a confirmation.
-export function createReload({systemctl, serviceName, log = console.error}) {
-  return function reload() {
-    if (systemctl(['is-active', serviceName], {allowFailure: true}).trim() !== 'active') return {text: msg('reloadUnmanaged')};
+// systemd reports these while it is already working on the unit; /reload must
+// not answer "this process is unmanaged" just because a start or stop is in
+// flight.
+const managed = new Set(['active', 'reloading', 'activating', 'deactivating']);
+
+const systemctl = (args, timeoutMs = 5000) => new Promise(resolve => {
+  execFile('/usr/bin/systemctl', ['--user', ...args], {encoding: 'utf8', timeout: timeoutMs, env: hostEnvironment()}, (error, stdout, stderr) => resolve({error, stdout, stderr}));
+});
+
+// /reload restarts the unit and answers nothing: a reply could only be sent
+// before the stop, and waiting for it would make the command slow.
+export function createReload({serviceName, log = console.error, run = systemctl}) {
+  return async function reload() {
+    const {stdout} = await run(['is-active', serviceName]);
+    if (!managed.has((stdout || '').trim())) return {text: msg('reloadUnmanaged')};
     log('[reload]', 'Restart requested');
-    systemctl(['restart', '--no-block', serviceName]);
-    return {text: msg('reload')};
+    const {error} = await run(['restart', '--no-block', serviceName]);
+    if (error) log('[reload]', error.message);
+    return {};
   };
 }

@@ -683,7 +683,9 @@ export function createWeixinChannel(config, log, stateDir) {
                             context: { contextToken: parsed.contextToken },
                         });
                     }
-                    catch {              }
+                    catch (error) {
+                        log(`[weixin] Message dispatch failed: ${error instanceof Error ? error.message : String(error)}`);
+                    }
                     finally { processing=false; }
                 }
             }

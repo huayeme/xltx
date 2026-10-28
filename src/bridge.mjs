@@ -23,6 +23,7 @@ export function createWeixinBridge({dir,defaultCwd,onMessage,log=console.error,t
     return changed;
   }
   const write=next=>{stamp(next);writePrivateFileSync(file,JSON.stringify(next,null,2)+'\n');saved=next;};
+  const outboxCount=()=>Object.values(saved.outbox||{}).reduce((total,answer)=>total+(answer.items?.length||0),0);
   let migrated=stamp(saved,fs.existsSync(file)?fs.statSync(file).mtimeMs:Date.now())||Object.hasOwn(saved,'token');
   delete saved.token;
   for(const [chatId,answer] of Object.entries(saved.outbox||{})){
@@ -152,7 +153,9 @@ export function createWeixinBridge({dir,defaultCwd,onMessage,log=console.error,t
         async onLogin({userId,previousUserId}){
           if(closed||channel!==current||!saved.enabled)throw new Error(msg('bridge.connectionChanged'));
           generation++;workGeneration++;
+          const dropped=outboxCount();
           write({...saved,outbox:{},references:{},executions:{}});
+          if(dropped)void delivery(userId)({text:msg('bridge.discardedOnReconnect')}).catch(cause=>log('[weixin-delivery]',cause.message));
           if(previousUserId!==userId)await onAccountChanged(userId);
           if(closed||channel!==current||!saved.enabled)throw new Error(msg('bridge.connectionChanged'));
         },
@@ -169,9 +172,11 @@ export function createWeixinBridge({dir,defaultCwd,onMessage,log=console.error,t
         }
         const {immediate,interrupt}=classifyMessage(message);
         if(interrupt){
+          const dropped=outboxCount();
           workGeneration++;
           deliveryAbort?.abort();
           write({...saved,outbox:{}});
+          if(dropped)void delivery(message.chatId)({text:msg('bridge.interrupted')}).catch(cause=>log('[weixin-delivery]',cause.message));
         }
         // Delivered replies are indexed as `${chatId}:${chatId}:${message_id}`;
         // the lookup must use the same shape, or quoting a reply inside a group

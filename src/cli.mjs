@@ -11,6 +11,10 @@ import {requestControl} from './control.mjs';
 import {copy} from './copy.mjs';
 import {application} from './release.mjs';
 
+function lingerState(){
+  try{return execFileSync('/usr/bin/loginctl',['show-user',String(process.getuid()),'-p','Linger','--value'],{encoding:'utf8',timeout:10000,env:{...process.env,LD_LIBRARY_PATH:undefined}}).trim();}catch{return undefined;}
+}
+
 export async function login(config,{request=requestControl,print=console.log,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}) {
   let previous='',lastStatus='';
   print(copy.cli.scanHint);
@@ -50,7 +54,7 @@ export async function main(command) {
     const result=await install();
     await ready(loadConfig(result.configFile));
     console.log(copy.cli.installed(result.configFile,result.dataDir));
-    const linger=execFileSync('/usr/bin/loginctl',['show-user',String(process.getuid()),'-p','Linger','--value'],{encoding:'utf8',timeout:10000,env:{...process.env,LD_LIBRARY_PATH:undefined}}).trim();
+    const linger=lingerState();
     if(linger!=='yes')console.log(copy.cli.linger(process.getuid()));
     return;
   }

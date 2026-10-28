@@ -32,7 +32,8 @@ function localWorkingDirectory(config,cwd){
 export function prepareSession(config,file){
   const text=fs.readFileSync(file,'utf8'),end=text.indexOf('\n');
   if(end<0)throw new Error(msg('rpc.forkInvalidHistory'));
-  const header=JSON.parse(text.slice(0,end));
+  let header;
+  try{header=JSON.parse(text.slice(0,end));}catch{throw new Error(msg('rpc.forkInvalidHistory'));}
   if(localWorkingDirectory(config,header.cwd)!==header.cwd){
     const stat=fs.statSync(file);
     const next={...header,cwd:config.cwd,parentSession:header.parentSession?sessionPath(config,header.parentSession):undefined};
@@ -43,7 +44,8 @@ export function createBranch(config,reference,beforeWrite=()=>{}) {
   const sessions=fs.realpathSync(path.join(config.dataDir,'sessions'));
   const file=fs.realpathSync(sessionPath(config,reference.sessionFile));
   if(!file.startsWith(sessions+path.sep))throw new Error(msg('rpc.forkInvalidPath'));
-  const records=fs.readFileSync(file,'utf8').split('\n').filter(line=>line.trim()).map(line=>JSON.parse(line));
+  let records;
+  try{records=fs.readFileSync(file,'utf8').split('\n').filter(line=>line.trim()).map(line=>JSON.parse(line));}catch{throw new Error(msg('rpc.forkInvalidHistory'));}
   const [header,...entries]=records;
   if(header?.type!=='session'||typeof header.id!=='string')throw new Error(msg('rpc.forkInvalidHistory'));
   const byId=new Map();

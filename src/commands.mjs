@@ -17,12 +17,12 @@ export function createCommandLayer(getBackend,{reload}={}) {
   return async function handle(message,publish,beforeSubmit) {
     const command=parseCommand(message);
     if(command&&!command.known)return {text:msg('command.unknown')};
-    if(command?.name==='reload')return reload();
+    if(command&&message.media?.length)return {text:msg('command.attachment')};
+    const {name,argument}=command||{};
+    if(command&&argument&&['new','fork','stop','session','reload'].includes(name))return {text:msg('command.noArgument',name)};
+    if(name==='reload')return reload();
     const backend=getBackend();
     if(!command)return backend.send({...message,sourceId:messageKey(message)},publish,beforeSubmit);
-    if(message.media?.length)return {text:msg('command.attachment')};
-    const {name,argument}=command;
-    if(['new','fork','stop','session'].includes(name)&&argument)return {text:msg('command.noArgument',name)};
     if(name==='stop')return backend.stop();
     if(name==='fork'){
       if(!message.hasQuote||!message.quoteId)return {text:msg('command.forkNeedsQuote')};
