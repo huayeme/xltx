@@ -57,7 +57,7 @@ const parameters = {
     mode: {type: 'string', enum: ['accept','dismiss']},
     state: {type: 'string', enum: ['visible','hidden','attached','detached']},
     loadState: {type: 'string', enum: ['load','domcontentloaded']},
-    timeoutMs: {type: 'integer', minimum: 0},
+    timeoutMs: {type: 'integer', minimum: 1000},
   },
   required: ['action'],
   additionalProperties: false,
@@ -88,7 +88,8 @@ export function createBrowser({cwd = process.cwd()} = {}) {
   }
 
   const tabId = target => [...tabs].find(([, value]) => value === target)?.[0];
-  const tabList = () => Promise.all([...tabs].map(async ([id, target]) => ({id, url: target.url(), title: await target.title().catch(() => ''), active: target === page})));
+  const titleOf = target => guard(() => target.title(), config.defaultTimeoutMs, 'Reading the tab title', {reset: false}).catch(() => '');
+  const tabList = () => Promise.all([...tabs].map(async ([id, target]) => ({id, url: target.url(), title: await titleOf(target), active: target === page})));
 
   async function close() {
     const current = context;
@@ -98,10 +99,30 @@ export function createBrowser({cwd = process.cwd()} = {}) {
     await current?.close().catch(() => {});
   }
 
+  // Playwright cannot interrupt evaluate, content or title: they keep waiting
+  // while the page is wedged. Race them against a timer, and drop the browser
+  // when the timeout proves the page itself is unresponsive.
+  async function guard(work, timeoutMs, label, {reset = true} = {}) {
+    let timer;
+    const expired = Symbol('timeout');
+    const promise = Promise.resolve().then(work);
+    promise.catch(() => {});
+    const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(expired), timeoutMs); });
+    try {
+      return await Promise.race([promise, timeout]);
+    } catch (error) {
+      if (error !== expired) throw error;
+      if (reset) await close();
+      throw new Error(`${label} did not finish within ${timeoutMs} ms`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function getPage() {
     if (page && !page.isClosed()) return page;
     if (context) {
-      page = await context.newPage();
+      page = await guard(() => context.newPage(), config.defaultTimeoutMs, 'Opening a tab');
       return page;
     }
     const {chromium} = await import('playwright');
@@ -112,7 +133,7 @@ export function createBrowser({cwd = process.cwd()} = {}) {
     });
     context.on('page', register);
     for (const existing of context.pages()) register(existing);
-    page = context.pages().at(-1) ?? await context.newPage();
+    page = context.pages().at(-1) ?? await guard(() => context.newPage(), config.defaultTimeoutMs, 'Opening a tab');
     return page;
   }
 
@@ -149,7 +170,7 @@ export function createBrowser({cwd = process.cwd()} = {}) {
       }
       const hadPage = page && !page.isClosed();
       await getPage();
-      if (args.action === 'new_tab' && hadPage) page = await context.newPage();
+      if (args.action === 'new_tab' && hadPage) page = await guard(() => context.newPage(), config.defaultTimeoutMs, 'Opening a tab');
       const target = page;
       signal?.throwIfAborted();
       if (args.action === 'open' || (args.action === 'new_tab' && args.url)) await target.goto(args.url, {waitUntil: 'domcontentloaded'});
@@ -195,7 +216,7 @@ export function createBrowser({cwd = process.cwd()} = {}) {
           const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'xltx-download-'));
           const file = path.join(directory, path.basename(download.suggestedFilename()) || 'download');
           try {
-            await download.saveAs(file);
+            await guard(() => download.saveAs(file), config.downloadTimeoutMs, 'Saving the download', {reset: false});
           } catch (error) {
             await fs.rm(directory, {recursive: true, force: true});
             throw error;
@@ -211,25 +232,25 @@ export function createBrowser({cwd = process.cwd()} = {}) {
         else await target.mouse.wheel(args.x ?? 0, args.y ?? config.scrollPixels);
       } else if (args.action === 'wait') {
         const timeout = args.timeoutMs ?? config.defaultTimeoutMs;
-        if (!Number.isInteger(timeout) || timeout < 0) throw new Error('timeoutMs must be a non-negative integer');
+        if (!Number.isInteger(timeout) || timeout < 1000) throw new Error('timeoutMs must be at least 1000');
         if (args.selector) await target.locator(args.selector).waitFor({state: args.state || 'visible', timeout});
         else await target.waitForLoadState(args.loadState || 'load', {timeout});
       } else if (args.action === 'screenshot') {
         const image = await target.screenshot({type: 'png', fullPage: args.fullPage === true});
         return {content: [{type: 'image', data: image.toString('base64'), mimeType: 'image/png'}], details: undefined};
       } else if (args.action === 'html') {
-        const html = args.selector ? await target.locator(args.selector).innerHTML() : await target.content();
-        return {content: [{type: 'text', text: JSON.stringify({tabId: tabId(target), url: target.url(), title: await target.title(), html})}], details: undefined};
+        const html = args.selector ? await target.locator(args.selector).innerHTML() : await guard(() => target.content(), config.defaultTimeoutMs, 'Reading the page HTML');
+        return {content: [{type: 'text', text: JSON.stringify({tabId: tabId(target), url: target.url(), title: await titleOf(target), html})}], details: undefined};
       } else if (args.action === 'evaluate') {
         if (typeof args.expression !== 'string') throw new Error('expression is required');
-        const value = await target.evaluate(args.expression);
+        const value = await guard(() => target.evaluate(args.expression), config.defaultTimeoutMs, 'Evaluating the expression');
         let text;
         try { text = JSON.stringify(value ?? null); } catch { text = String(value); }
         return {content: [{type: 'text', text}], details: undefined};
       } else if (!['read', 'new_tab', 'switch_tab'].includes(args.action)) throw new Error('Unknown action');
       const text = await target.locator(args.action === 'read' && args.selector ? args.selector : 'body').innerText();
       return {
-        content: [{type: 'text', text: JSON.stringify({tabId: tabId(target), url: target.url(), title: await target.title(), untrustedPageText: text})}],
+        content: [{type: 'text', text: JSON.stringify({tabId: tabId(target), url: target.url(), title: await titleOf(target), untrustedPageText: text})}],
         details: undefined,
       };
     } finally {

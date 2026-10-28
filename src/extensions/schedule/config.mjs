@@ -13,5 +13,6 @@ export const TASK_CONFIG = Object.freeze({
   secondMs: 1000,
   defaultNotifyFailure: true,
   defaultLinkWhen: 'success',
+  runTimeoutMs: 600000,
   storage: Object.freeze({tasksFile: 'tasks.json', runsDirectory: 'task-runs', recordExtension: '.json', temporarySuffix: '.tmp', fileMode: 0o600}),
 });

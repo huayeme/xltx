@@ -8,13 +8,15 @@
     "verboseOff": "思考和工具输出都收起来啦。",
     "verboseNoThinking": "思考藏好了，工具输出还留着。",
     "verboseNoTools": "思考留着，工具输出藏好啦。",
-    "unknown": "这个命令我不认识哦，我只认 /new /fork /stop /session /model /thinking /compact /verbose。",
+    "unknown": "这个命令我不认识哦，我只认 /new /fork /stop /session /model /thinking /compact /verbose /reload。",
     "attachment": "命令先单独发一条，附件另外发。",
     "noArgument": "/{0} 不用带参数，直接发 /{0} 就好。",
     "forkNeedsQuote": "先引用一条消息，再发 /fork，我才能从这里开新会话。",
     "forkNoReference": "找不到这条消息的出处，现在没法从它开新会话。"
   },
   "stop": "停好啦，后面排队的一起取消了。",
+  "reload": "好，我把整个后台服务重启一遍，马上回来。",
+  "reloadUnmanaged": "这个进程现在不是后台服务在管，强制重启会直接断掉，先不动它。",
   "ask": {
     "textOnly": "这个问题先用文字回答我，图片等下再发。",
     "ended": "这个问题已经收尾啦，重新发一个新的吧。",

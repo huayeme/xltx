@@ -11,8 +11,8 @@ export const browserConfig = Object.freeze({
   taskProfileDirectory: 'data/browser-profile-task',
   executableSearchDepth: 4,
   fontDpi: 96,
-  defaultTimeoutMs: 0,
-  navigationTimeoutMs: 0,
-  downloadTimeoutMs: 0,
+  defaultTimeoutMs: 30000,
+  navigationTimeoutMs: 30000,
+  downloadTimeoutMs: 60000,
   scrollPixels: 600,
 });

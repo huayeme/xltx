@@ -1,5 +1,5 @@
 import {msg} from './messages.mjs';
-const names=new Set(['new','fork','stop','session','model','thinking','compact','verbose']);
+const names=new Set(['new','fork','stop','session','model','thinking','compact','verbose','reload']);
 export const messageKey=message=>`${message.userId}:${message.chatId}:${message.messageId}`;
 export function parseCommand(message) {
   const text=String(message.text||'').trim();
@@ -11,12 +11,13 @@ export function parseCommand(message) {
 export function commandPolicy(message) {
   const command=parseCommand(message);
   const interrupt=command?.name==='stop'&&!command.argument&&!message.media?.length;
-  return {immediate:!!command&&(!command.known||interrupt||command.name==='verbose'),interrupt};
+  return {immediate:!!command&&(!command.known||interrupt||command.name==='verbose'||command.name==='reload'),interrupt};
 }
-export function createCommandLayer(getBackend) {
+export function createCommandLayer(getBackend,{reload}={}) {
   return async function handle(message,publish,beforeSubmit) {
     const command=parseCommand(message);
     if(command&&!command.known)return {text:msg('command.unknown')};
+    if(command?.name==='reload')return reload();
     const backend=getBackend();
     if(!command)return backend.send({...message,sourceId:messageKey(message)},publish,beforeSubmit);
     if(message.media?.length)return {text:msg('command.attachment')};
