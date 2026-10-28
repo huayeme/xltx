@@ -1,0 +1,21 @@
+{
+  "backend": "pi",
+  "piCommand": "./runtime/bin/pi",
+  "cwd": "./workspace",
+  "dataDir": null,
+  "runtimeTimeoutMs": 120000,
+  "shutdownTimeoutMs": 5000,
+  "maxRecordBytes": 67108864,
+  "textLimit": 1200,
+  "healthIntervalMs": 2000,
+  "controlTimeoutMs": 10000,
+  "loginPollMs": 1000,
+  "retention": {
+    "maxBytes": 2000000000,
+    "maxAgeMs": 604800000,
+    "checkIntervalMs": 180000
+  },
+  "rpc": {
+    "startTimeoutMs": 20000
+  }
+}

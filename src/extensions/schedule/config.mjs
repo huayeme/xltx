@@ -1,0 +1,17 @@
+export const TASK_CONFIG = Object.freeze({
+  kinds: Object.freeze(['once', 'interval', 'daily', 'weekly', 'hook']),
+  linkConditions: Object.freeze(['success', 'failed', 'finished']),
+  activeStatuses: Object.freeze(['running', 'stopping']),
+  retryableStatuses: Object.freeze(['failed', 'interrupted', 'cancelled', 'waiting']),
+  failureStatuses: Object.freeze(['failed', 'interrupted']),
+  maxTasks: 500,
+  maxPending: 500,
+  nameLength: 80,
+  instructionLength: 30000,
+  eventLength: 80,
+  intervalMinSeconds: 1,
+  secondMs: 1000,
+  defaultNotifyFailure: true,
+  defaultLinkWhen: 'success',
+  storage: Object.freeze({tasksFile: 'tasks.json', runsDirectory: 'task-runs', recordExtension: '.json', temporarySuffix: '.tmp', fileMode: 0o600}),
+});

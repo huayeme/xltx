@@ -1,0 +1,15 @@
+{
+  "artifact": "dist/weixin-agent-linux-x64.tar.gz",
+  "sha256": "9e868ee406d1e0f551d333cdeb1d47dc007cce012053122aa8bb88ad1c56b56b",
+  "bytes": 83886243,
+  "nodeVersion": "24.21.0",
+  "piVersion": "1.1.0",
+  "platform": "linux",
+  "arch": "x64",
+  "tests": {
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "validation": "docs/portable-validation.md"
+}

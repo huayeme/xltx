@@ -1,0 +1,28 @@
+{
+  "name": "xltx",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "小林同学，独立微信 AI 服务",
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "scripts": {
+    "setup": "./xltx setup",
+    "start": "./xltx start",
+    "stop": "./xltx stop",
+    "restart": "./xltx restart",
+    "status": "./xltx status",
+    "login": "./xltx login",
+    "logout": "./xltx logout",
+    "logs": "./xltx logs",
+    "check": "./xltx check",
+    "uninstall": "./xltx uninstall",
+    "package": "node scripts/package.mjs",
+    "test": "TEST_PI_INTEGRATION=1 node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.64.1",
+    "qrcode": "1.5.4"
+  }
+}

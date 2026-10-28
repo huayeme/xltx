@@ -1,0 +1,9 @@
+# The release target is Linux: source files must be checked out and packaged as LF,
+# regardless of the maintainer's core.autocrlf setting.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.gz binary
+*.tar binary

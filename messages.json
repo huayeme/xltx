@@ -1,0 +1,111 @@
+{
+  "command": {
+    "verboseUsage": "用法：/verbose on 显示思考和工具输出；/verbose off 都藏起来；/verbose nothinking 只藏思考；/verbose notools 只藏工具输出；/verbose status 看当前设置。",
+    "verboseStatus": "当前模式：{0}\n思考：{1}\n工具：{2}",
+    "verboseShown": "显示",
+    "verboseHidden": "隐藏",
+    "verboseOn": "思考和工具输出都放出来啦。",
+    "verboseOff": "思考和工具输出都收起来啦。",
+    "verboseNoThinking": "思考藏好了，工具输出还留着。",
+    "verboseNoTools": "思考留着，工具输出藏好啦。",
+    "unknown": "这个命令我不认识哦，我只认 /new /fork /stop /session /model /thinking /compact /verbose。",
+    "attachment": "命令先单独发一条，附件另外发。",
+    "noArgument": "/{0} 不用带参数，直接发 /{0} 就好。",
+    "forkNeedsQuote": "先引用一条消息，再发 /fork，我才能从这里开新会话。",
+    "forkNoReference": "找不到这条消息的出处，现在没法从它开新会话。"
+  },
+  "stop": "停好啦，后面排队的一起取消了。",
+  "ask": {
+    "textOnly": "这个问题先用文字回答我，图片等下再发。",
+    "ended": "这个问题已经收尾啦，重新发一个新的吧。",
+    "confirm": "只需要回「是」或「否」哦。",
+    "select": "回序号或者选项文字都行，从上面挑一个。",
+    "cancelled": "这个问题取消掉啦。",
+    "selectHint": "回序号或者选项文字。",
+    "confirmHint": "回「是」或「否」都可以。",
+    "inputHint": "把想说的直接回给我就好。",
+    "confirmAnswers": ["是", "否", "同意", "拒绝", "yes", "no"],
+    "affirmativeAnswers": ["是", "同意", "yes"]
+  },
+  "rpc": {
+    "closed": "我这边下班啦，发条消息就能把我叫醒。",
+    "startFailed": "Pi 起不来：{0}",
+    "sessionMissing": "原来的会话文件不见了，把历史文件放回去再试试。",
+    "reconnect": "{0}。再发一条消息，我重新连上。",
+    "stopped": "这个已经被 /stop 打断啦。",
+    "busy": "上一件事还没做完，发 /stop 打断我，再继续。",
+    "newCancelled": "新会话没开成，这次先跳过。",
+    "newDone": "新会话开好了，原来那个还在。",
+    "forkInvalidPath": "引用到的会话位置不太对，现在没法从它开新会话。",
+    "forkInvalidEntry": "引用的不是一条聊天消息，换条消息再试。",
+    "forkInvalidHistory": "这段历史现在没法用来开新会话，原来的会话还好好在着。",
+    "forkCancelled": "开新会话取消了，你还在原来的会话里。",
+    "forkDone": "从引用的那条消息开了新会话，只带这条消息和之前的历史，原来的会话还在。",
+    "modelUsage": "用法是 /model 服务商/模型，比如 /model deepseek/deepseek-flash，中间那个斜杠不能少。",
+    "modelDone": "模型换成 {0} 啦。",
+    "thinkingInvalid": "这个档位不行，选项是：{0}",
+    "thinkingDone": "思考档位设成 {0} 啦。",
+    "compacted": "上下文收拾干净啦，接着聊。",
+    "attachMissing": "附件没拿到，再发一次吧。",
+    "controlTimeout": "Pi 半天没回我，结果我也不敢乱说。",
+    "responseTooLarge": "Pi 回得太长了，我处理不了。",
+    "rejected": "Pi 没收下这个请求。",
+    "connectionClosed": "和 Pi 的连接断啦。",
+    "inputTooLarge": "内容太大了，超过我能发出去的上限。",
+    "exited": "Pi 退出了（{0}）{1}"
+  },
+  "session": {
+    "title": "当前会话：{0}",
+    "model": "正在用：{0}",
+    "modelUnset": "还没选",
+    "busy": "状态：忙",
+    "idle": "状态：闲",
+    "tokens": "总共 {0} tokens",
+    "io": "输入 {0} / 输出 {1}",
+    "cache": "缓存读 {0} / 缓存写 {1}",
+    "cost": "大概花了 ${0}",
+    "context": "上下文：{0} / {1}",
+    "modelsTitle": "当前模型：{0}",
+    "modelsHint": "想换的话，跟我说 /model 服务商/模型。",
+    "thinkingTitle": "当前思考档位：{0}",
+    "thinkingOptions": "可选项：{0}",
+    "thinkingHint": "想改的话，跟我说 /thinking 档位。"
+  },
+  "bridge": {
+    "connectionChanged": "微信连接刚好变了，这次没发出去。",
+    "stopped": "微信这边停了，这次没发出去。",
+    "closed": "微信服务已经关啦。",
+    "busyConfigure": "我正把消息递给 Pi，等这一步做完再改设置。",
+    "unknownAction": "这个操作我不认识。",
+    "notLoggedIn": "微信还没登录，任务结果发不出去。",
+    "uncertain": "上一条到底送到没有我拿不准，先去聊天里看一眼在不在；我没自作主张重发。",
+    "uncertainWithReason": "上一条到底送到没有我拿不准，先去聊天里看一眼在不在；我没自作主张重发。（{0}）",
+    "notSubmitted": "这条没发出去，再试一次吧。（{0}）",
+    "commandFailed": "命令没执行成：{0}",
+    "commandUncertain": "命令提交了，但结果确认不了。先看一眼当前会话状态，免得同一件事跑两遍。（{0}）"
+  },
+  "preference": {
+    "none": "默认",
+    "failed": "上次的设置没恢复成：{0}\n现在用的是 {1}，思考档位 {2}。\n想改就跟我说 /model 服务商/模型 或 /thinking 档位。"
+  },
+  "task": {
+    "success": "[定时任务：{0}]\n{1}",
+    "failed": "[定时任务：{0}] 没跑成\n{1}",
+    "empty": "(没说话)"
+  },
+  "channel": {
+    "imageFailed": "图片没下载下来：{0}。整条消息没提交，麻烦再发一次。",
+    "mediaFailed": "图片或媒体没下载下来，麻烦再发一次。",
+    "reasons": {
+      "network": "网络没连上",
+      "server": "下载服务器暂时不可用（HTTP {0}）",
+      "http": "下载服务器返回 HTTP {0}",
+      "timeout": "下载超时",
+      "format": "图片格式不支持，发 PNG、JPEG、GIF 或 WebP 吧",
+      "decrypt": "图片解密失败，或者解密信息不对",
+      "metadata": "图片缺少下载地址或解密信息",
+      "unsafe": "图片没通过下载安全校验",
+      "storage": "图片存不下来"
+    }
+  }
+}

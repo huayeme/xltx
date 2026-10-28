@@ -1,0 +1,17 @@
+Weixin adapter from @michengai/dsh-im-connect 0.1.71
+Copyright MichengAI contributors
+https://github.com/MichengAI/dsh-im-connect
+Apache-2.0. Copied compiled adapter and its local dependencies, Modified: forward parsed messageId to the incoming message handler (Pi bridge deduplication).
+
+Further modifications: expose incoming quote IDs and return sendmessage server IDs for precise history branching.
+Preserve unsafe numeric JSON integers as their exact source strings to prevent 64-bit message ID rounding.
+Return media send server IDs through the file wrapper for reply history association.
+
+Standalone service modifications: restrict API origins to Weixin HTTPS, reject unauthorized inbound messages before media downloads, and disallow media redirects.
+
+Installation-local storage: outgoing temporary files are created under the channel data directory instead of the system temporary directory.
+
+Language boundary: channel states and developer logs use English. The bundled zh/en locale layer (engine/command-locale.js and engine/command-messages.js) was removed: user-facing notices now come from config.messages, which the host fills from its own message file (data/messages.json).
+Failure diagnostics use English errors; image errors expose only a category and status code, and the host decides how to phrase the user feedback.
+
+Media reception no longer applies a local attachment byte limit.

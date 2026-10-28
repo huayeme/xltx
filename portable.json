@@ -1,0 +1,10 @@
+{
+  "nodeVersion": "24.21.0",
+  "piVersion": "1.1.0",
+  "platform": "linux",
+  "arch": "x64",
+  "logMaxBytes": 10485760,
+  "logKeepFiles": 3,
+  "logPollMs": 1000,
+  "commandTimeoutMs": 120000
+}
